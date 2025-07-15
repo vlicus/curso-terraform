@@ -24,6 +24,12 @@ variable "environment" {
   }
 }
 
+variable "create_backup" {
+  description = "¿Crear archivo de backup?"
+  type        = bool
+  default     = true
+}
+
 variable "max_connections" {
   description = "Número máximo de conexiones"
   type        = number
@@ -45,5 +51,66 @@ variable "features" {
       for feature in var.features : contains(["auth", "logging", "monitoring", "cache"], feature)
     ])
     error_message = "Features válidas: auth, logging, monitoring, cache."
+  }
+}
+
+variable "databases" {
+  description = "Configuración de bases de datos"
+  type = list(object({
+    name     = string
+    type     = string
+    size_gb  = number
+    backup   = bool
+  }))
+  default = [
+    {
+      name     = "users"
+      type     = "postgresql"
+      size_gb  = 10
+      backup   = true
+    },
+    {
+      name     = "cache"
+      type     = "redis"
+      size_gb  = 2
+      backup   = false
+    }
+  ]
+}
+
+variable "service_ports" {
+  description = "Puertos de los servicios"
+  type        = map(number)
+  default = {
+    web      = 80
+    api      = 8080
+    database = 5432
+    cache    = 6379
+  }
+}
+
+variable "config_by_env" {
+  description = "Configuración específica por entorno"
+  type = map(object({
+    instance_count = number
+    log_level     = string
+    monitoring    = bool
+  }))
+  default = {
+    dev = {
+      instance_count = 1
+      log_level     = "DEBUG"
+      monitoring    = false
+    }
+    staging = {
+      instance_count = 2
+      log_level     = "INFO"
+      monitoring    = true
+    }
+    prod = {
+      instance_count = 5
+      log_level     = "ERROR"
+      monitoring    = true
+    }
   }
 }

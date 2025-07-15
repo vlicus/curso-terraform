@@ -1,0 +1,1 @@
+{"project":{"created_at":"2025-07-15T15:29:18Z","environment":"dev","name":"mi-app-web"},"settings":{"debug_mode":true,"features":["auth","logging"],"max_connections":100}}

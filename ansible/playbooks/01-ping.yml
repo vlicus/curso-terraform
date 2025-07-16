@@ -1,0 +1,16 @@
+---
+# Este es tu primer playbook de Ansible
+# Los tres guiones (---) indican el inicio de un documento YAML
+
+- name: Verificar conectividad con todos los hosts
+  hosts: all  # En qué hosts se ejecutará
+  gather_facts: no  # No recopilar información del sistema (más rápido)
+  
+  tasks:
+    - name: Hacer ping a los hosts
+      ping:
+      
+    - name: Mostrar un mensaje
+      debug:
+        msg: "¡Conexión exitosa con {{ inventory_hostname }}!"
+        

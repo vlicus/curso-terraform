@@ -7,7 +7,7 @@
 
   vars:
     site_name: "mi-segundo-sitio-con-ansible" # Nombre único para tu sitio
-    mensaje_personalizado: "¡Explorando la automatización con Ansible desde Badajoz, Extremadura! Son las {{ ansible_date_time.time }} del {{ ansible_date_time.date }}."
+    mensaje_personalizado: "¡Explorando la automatización con Ansible desde Girona, Cataluña! Hora del codespace: {{ ansible_date_time.time }} del {{ ansible_date_time.date }}."
     # Si vas a usar múltiples playbooks, puedes definir variables como 'nginx_conf_dir'
     # o 'nginx_sites_available_dir' aquí o en un archivo de vars dedicado.
 

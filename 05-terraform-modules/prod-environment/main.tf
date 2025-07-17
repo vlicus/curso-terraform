@@ -44,9 +44,11 @@ module "payroll_system" {
 resource "local_file" "prod_checklist" {
   filename = "PRODUCTION-CHECKLIST.md"
   content = templatefile("${path.module}/prod-checklist.tpl", {
-    company_name = var.company_name
-    app_info     = module.payroll_system.application_info
-    infra_summary = module.payroll_system.infrastructure_summary
+    company_name    = var.company_name
+    app_info        = module.payroll_system.application_info
+    infra_summary   = module.payroll_system.infrastructure_summary
+    employee_count  = var.employee_count
+    department_count = var.department_count
   })
 }
 

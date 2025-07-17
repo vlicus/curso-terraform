@@ -1,0 +1,99 @@
+---
+# Playbook Definitivo: Instalación y Configuración de Nginx con Sitio Personalizado
+
+- name: Instalar y configurar Nginx, y desplegar sitio web mejorado
+  hosts: droplet # Asegúrate de que 'droplet' está definido en tu inventario
+  become: yes # Ejecutar todas las tareas de este 'play' con privilegios de sudo
+
+  vars:
+    site_name: "mi-segundo-sitio-con-ansible" # Nombre único para tu sitio
+    mensaje_personalizado: "¡Explorando la automatización con Ansible desde Badajoz, Extremadura! Son las {{ ansible_date_time.time }} del {{ ansible_date_time.date }}."
+    # Si vas a usar múltiples playbooks, puedes definir variables como 'nginx_conf_dir'
+    # o 'nginx_sites_available_dir' aquí o en un archivo de vars dedicado.
+
+  tasks:
+    - name: Asegurar que Nginx está instalado
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: yes # Siempre buena práctica actualizar caché antes de instalar
+
+    - name: Asegurar que el servicio Nginx está iniciado y habilitado
+      ansible.builtin.systemd:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Crear directorio raíz para el sitio web
+      ansible.builtin.file:
+        path: "/var/www/{{ site_name }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Crear página index.html usando plantilla (Jinja2)
+      ansible.builtin.template:
+        src: ../templates/index.html.j2 # Ruta a tu plantilla HTML
+        dest: "/var/www/{{ site_name }}/index.html"
+        owner: www-data
+        group: www-data
+        mode: '0644'
+      # Esta tarea no necesita 'notify' si solo cambia el HTML, Nginx no necesita recargarse por esto.
+      # Sin embargo, si quieres que se notifique cada vez que el contenido cambia, puedes añadirlo.
+
+    - name: Configurar el sitio en Nginx usando plantilla (Jinja2)
+      ansible.builtin.template:
+        src: ../templates/nginx-site.j2 # Ruta a tu plantilla de configuración de Nginx
+        dest: "/etc/nginx/sites-available/{{ site_name }}"
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload nginx # Notificar al handler para recargar Nginx si la configuración cambia
+
+    - name: Habilitar el nuevo sitio creando un enlace simbólico
+      ansible.builtin.file:
+        src: "/etc/nginx/sites-available/{{ site_name }}"
+        dest: "/etc/nginx/sites-enabled/{{ site_name }}"
+        state: link # Crear un enlace simbólico
+        owner: root
+        group: root
+      notify: reload nginx # Recargar Nginx si el enlace se crea o cambia
+
+    # --- Tareas de Limpieza (MUY IMPORTANTE para evitar conflictos) ---
+    - name: Deshabilitar el sitio por defecto de Nginx si existe
+      ansible.builtin.file:
+        path: "/etc/nginx/sites-enabled/default"
+        state: absent # Asegura que este enlace simbólico NO esté presente
+      notify: reload nginx # Recarga Nginx si el enlace fue eliminado
+
+    - name: Deshabilitar el sitio 'mi-primer-sitio' si existe
+      ansible.builtin.file:
+        path: "/etc/nginx/sites-enabled/mi-primer-sitio"
+        state: absent
+      notify: reload nginx # Recarga Nginx si el enlace fue eliminado
+
+    - name: Probar la configuración de Nginx
+      ansible.builtin.command: nginx -t
+      register: nginx_test_result
+      changed_when: false # Este comando no cambia el estado, solo verifica
+      failed_when: "'test failed' in nginx_test_result.stderr" # Fallar si la prueba de Nginx falla
+
+    - name: Mostrar el resultado de la prueba de configuración de Nginx
+      ansible.builtin.debug:
+        msg: "{{ nginx_test_result.stdout }}"
+      when: nginx_test_result is defined # Solo muestra si la prueba se ejecutó
+
+  handlers:
+    - name: reload nginx
+      ansible.builtin.systemd_service:
+        name: nginx
+        state: reloaded # Preferible a 'restarted' para sitios activos, es más rápido
+        enabled: yes # Asegura que el servicio esté habilitado para iniciar al arrancar
+
+    # Puedes tener un handler para reiniciar si 'reloaded' no resuelve un problema complejo
+    # - name: restart nginx
+    #   ansible.builtin.systemd_service:
+    #     name: nginx
+    #     state: restarted
+    #     enabled: yes

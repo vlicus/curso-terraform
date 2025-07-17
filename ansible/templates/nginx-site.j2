@@ -1,0 +1,21 @@
+server {
+    listen 80;
+    server_name {{ site_name }} {{ ansible_hostname }} {{ ansible_default_ipv4.address }}; # Añadir la IP aquí
+    
+    root /var/www/{{ site_name }};
+    index index.html;
+    
+    # Configuración generada por Ansible
+    # Fecha: {{ ansible_date_time.iso8601 }}
+    # Host: {{ inventory_hostname }}
+    
+    location / {
+        try_files $uri $uri/ =404;
+    }
+    
+    # Información del servidor
+    location /server-info {
+        add_header Content-Type text/plain;
+        return 200 "Server: {{ ansible_hostname }}\nIP: {{ ansible_default_ipv4.address }}\nManaged by Ansible";
+    }
+}

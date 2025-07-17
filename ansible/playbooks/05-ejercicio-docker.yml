@@ -1,0 +1,46 @@
+---
+# SOLUCIÓN - Ejercicio Docker: Instalar y configurar Docker
+# Este playbook instala Docker en los servidores web
+
+- name: Instalar y configurar Docker
+  hosts: droplet
+  become: yes # Ejecutar tareas con privilegios de sudo
+
+  tasks:
+    - name: Instalar dependencias de Docker
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+        update_cache: yes
+
+    - name: Agregar clave GPG de Docker
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Obtener arquitectura del sistema
+      command: dpkg --print-architecture
+      register: dpkg_architecture
+      changed_when: false # Esta tarea no cambia el estado del sistema
+
+    - name: Agregar repositorio de Docker
+      apt_repository:
+        repo: "deb [arch={{ dpkg_architecture.stdout }}] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+
+    - name: Instalar Docker Engine
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+        update_cache: yes # Vuelve a actualizar la caché después de añadir el repo
+
+    - name: Asegurar que Docker está iniciado y habilitado
+      systemd:
+        name: docker

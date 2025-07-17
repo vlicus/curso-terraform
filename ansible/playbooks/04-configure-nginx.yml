@@ -1,0 +1,62 @@
+---
+- name: Configurar sitios web en Nginx
+  hosts: droplet
+  become: yes
+  
+  vars:
+    site_name: "mi-primer-sitio"
+    
+  tasks:
+    - name: Crear directorio para el sitio web
+      file:
+        path: "/var/www/{{ site_name }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+        
+    - name: Crear página index.html
+      copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>{{ site_name }} en {{ ansible_hostname }}</title>
+          </head>
+          <body>
+              <h1>Bienvenido a {{ site_name }}</h1>
+              <p>Este sitio esta alojado en: {{ ansible_hostname }}</p>
+              <p>IP del servidor: {{ ansible_default_ipv4.address }}</p>
+              <p>Configurado con Ansible el: {{ ansible_date_time.iso8601 }}</p>
+          </body>
+          </html>
+        dest: "/var/www/{{ site_name }}/index.html"
+        owner: www-data
+        group: www-data
+        mode: '0644'
+        
+    - name: Configurar el sitio en Nginx usando template
+      template:
+        src: ../templates/nginx-site.j2
+        dest: "/etc/nginx/sites-available/{{ site_name }}"
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload nginx
+      
+    - name: Habilitar el sitio
+      file:
+        src: "/etc/nginx/sites-available/{{ site_name }}"
+        dest: "/etc/nginx/sites-enabled/{{ site_name }}"
+        state: link
+      notify: reload nginx
+      
+    - name: Probar la configuración de Nginx
+      command: nginx -t
+      changed_when: false
+      
+  handlers:
+    - name: reload nginx
+      systemd:
+        name: nginx
+        state: reloaded

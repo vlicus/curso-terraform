@@ -1,0 +1,40 @@
+---
+- name: Instalar paquetes esenciales en los servidores web
+  hosts: droplet
+  become: yes  # Necesitamos privilegios de root
+  
+  vars:
+    paquetes_basicos:
+      - nginx
+      - git
+      - curl
+      - wget
+      - vim
+      - htop
+      - python3-pip
+      
+  tasks:
+    - name: Actualizar caché de apt
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600  # Caché válida por 1 hora
+        
+    - name: Instalar paquetes básicos
+      apt:
+        name: "{{ paquetes_basicos }}"
+        state: present
+        
+    - name: Asegurar que nginx está iniciado y habilitado
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
+        
+    - name: Verificar el estado de nginx
+      command: systemctl status nginx
+      register: nginx_status
+      changed_when: false  # Este comando no cambia nada
+      
+    - name: Mostrar estado de nginx
+      debug:
+        msg: "Nginx está {{ 'activo' if 'active (running)' in nginx_status.stdout else 'inactivo' }}"

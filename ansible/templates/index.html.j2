@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ site_name }} en {{ ansible_hostname }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #0056b3; }
+        .original-message {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e6f7ff;
+            border-left: 5px solid #007bff;
+            color: #004085;
+            font-style: italic;
+        }
+        footer { margin-top: 30px; font-size: 0.9em; color: #666; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>¡Hola desde {{ site_name }}!</h1>
+        <p>Este sitio web ha sido mágicamente configurado y desplegado con **Ansible**.</p>
+        <p>Está alojado en el servidor: <strong>{{ ansible_hostname }}</strong></p>
+        <p>La dirección IP de este servidor es: <strong>{{ ansible_default_ipv4.address }}</strong></p>
+        <p>La configuración se realizó con Ansible el: <strong>{{ ansible_date_time.iso8601 }}</strong></p>
+
+        <div class="original-message">
+            <p><strong>Mensaje Original del Curso:</strong></p>
+            <p>{{ mensaje_personalizado }}</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; {{ ansible_date_time.year }} Tu Curso de IaC. ¡Automatizando el mundo!</p>
+    </footer>
+</body>
+</html>

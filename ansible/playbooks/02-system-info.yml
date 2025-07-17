@@ -1,0 +1,39 @@
+---
+- name: Recopilar y mostrar información del sistema
+  hosts: all
+  gather_facts: yes  # Necesitamos los facts del sistema
+  
+  tasks:
+    - name: Mostrar información básica del sistema
+      debug:
+        msg: |
+          Hostname: {{ ansible_hostname }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Kernel: {{ ansible_kernel }}
+          CPU cores: {{ ansible_processor_vcpus }}
+          Memoria total: {{ ansible_memtotal_mb }} MB
+          Memoria libre: {{ ansible_memfree_mb }} MB
+          
+    - name: Mostrar todas las interfaces de red
+      debug:
+        msg: "Interfaces: {{ ansible_interfaces }}"
+        
+    - name: Asegurar que el directorio reports existe
+      local_action:
+        module: file
+        path: "./reports"
+        state: directory
+      run_once: yes
+        
+    - name: Crear un reporte en archivo local
+      local_action:
+        module: copy
+        content: |
+          Reporte del sistema para {{ inventory_hostname }}
+          ================================================
+          Fecha: {{ ansible_date_time.iso8601 }}
+          Hostname: {{ ansible_hostname }}
+          IP: {{ ansible_default_ipv4.address }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Uptime: {{ ansible_uptime_seconds // 86400 }} días
+        dest: "./reports/{{ inventory_hostname }}_info.txt"
